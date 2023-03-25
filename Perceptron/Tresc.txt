@@ -1,0 +1,16 @@
+Zaimplementuj perceptron, który rozpoznaje 2 klasy.
+
+Argumenty programu:
+ - ścieżka do pliku treningowego
+ - ścieżka do pliku testowego
+  - współczynnik uczenia 
+ - liczba epok - jedna epoka to jedna iteracja przez całe dane treningowe
+
+Perceptron jest trenowany przy użyciu reguły delta przez kilka epok na danych treningowych, a następnie jest testowany na danych testowych.
+Podaj dokładność na zestawie testowym po każdej epoce.
+
+Dane treningowe mogą być mieszane po każdej epoce, aby uzyskać lepsze wyniki.
+
+Program powinien być uniwersalny (podobnie jak dla knn), powinien pracować na dowolnych wymiarach danych liczbowych z wyjątkiem atrybutu decyzyjnego, który może przyjmować dokładnie 2 wartości nominalne.
+Żadne zewnętrzne biblioteki nie są dozwolone dla operacji matematycznych. Możesz używać bibliotek do odczytu danych, wstępnego przetwarzania, przechowywania, mieszania itp.
+Program należy uruchomić na danych z example2 oraz z iris_perceptron oddzielnie.
