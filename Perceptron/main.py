@@ -9,7 +9,6 @@ class Perceptron:
         self.test_file = test_file
         self.learning_rate = learning_rate
         self.num_epochs = num_epochs
-        self.threshold = 1
         self.accuracies = []
         self.train_accuracies = []
         self.classes = dict()
@@ -24,11 +23,15 @@ class Perceptron:
             lines.append(features + [label.strip()])
         return lines
 
-    def delta(self, d, y, X):
+    def training_step(self, ground_truth, y, X):
+        assert len(self.weights) == len(X)
         for i, (w, x) in enumerate(zip(self.weights, X)):
-            self.weights[i] = w + (d - y) * self.learning_rate * x
+            self.weights[i] = w + (ground_truth - y) * self.learning_rate * x
         if self.weights[0] == float('inf'):
             print('Weights became infinite, exiting.')
+            exit(0)
+        if self.weights[0] != self.weights[0]:
+            print('Weights became NaN, exiting.')
             exit(0)
 
     def make_unit_vector(self, vector):
@@ -41,9 +44,32 @@ class Perceptron:
             vector[i] = elem
         return vector
 
+    def dot_product(self, v1, v2):
+        sum = 0
+        for i1, i2 in zip(v1, v2):
+            sum += i1 * i2
+        return sum
+
+    def run_epoch(self, data, train=False, print_predictions=False):
+        accuracy = 0
+        if train:
+            self.learning_rate *= 0.997
+
+        for observation in data:
+            predicted, y, quant_y, X = self.predict(observation[:-1])
+            ground_truth = self.classes[observation[-1]]
+            if train:
+                self.training_step(ground_truth, y, X)
+                self.weights = self.make_unit_vector(self.weights)
+            elif print_predictions:
+                print('true class: ', observation[-1], ', predicted: ', predicted)
+            if ground_truth == quant_y:
+                accuracy += 1
+        return accuracy / len(data)
+
     def train(self):
         data = self.read_file(self.train_file)
-        self.weights = data[0][:-1] + [self.threshold, ]
+        self.weights = data[0][:-1] + [1.0, ]
         first_class = data[0][-1]
         self.classes[first_class] = 0
         for X in data:
@@ -52,86 +78,46 @@ class Perceptron:
                 break
         self.classes[second_class] = 1
         for i in range(self.num_epochs):
-            a = 0.95
-            # weights -> unit vector
-            # w = np.array(self.weights)
-            # self.weights = w / np.linalg.norm(w)
-            self.weights = self.make_unit_vector(self.weights)
-            train_accuracy = 0
-            for observation in data:
-                X = observation[:-1] + [1, ]
-                y = self.dot_product(self.weights, X)
-                if y >= self.threshold:
-                    quant_y = 1
-                else:
-                    quant_y = 0
-                d = self.classes[observation[-1]]
-                self.delta(d, y, X)
-                self.threshold = self.weights[-1]
-                # print(list(self.classes.keys())[list(self.classes.values()).index(y)])
-                if d == quant_y:
-                    train_accuracy += 1
-            self.train_accuracies.append(train_accuracy / len(data))
+            train_accuracy = self.run_epoch(data, train=True)
+            self.train_accuracies.append(train_accuracy)
             shuffle(data)
             self.accuracies.append(self.test())
 
-    def dot_product(self, v1, v2):
-        sum = 0
-        for i1, i2 in zip(v1, v2):
-            sum += i1 * i2
-        return sum
-
     def test(self, print_predictions=False):
         data = self.read_file(self.test_file)
-        accuracy = 0
-        for observation in data:
-            X = observation[:-1] + [1, ]
-            y = self.dot_product(self.weights, X)
-            if y > self.threshold:
-                y = 1
-            else:
-                y = 0
-            predicted = list(self.classes.keys())[list(self.classes.values()).index(y)]
-            if print_predictions:
-                print('true class: ', observation[-1], ', predicted: ', predicted)
-            if predicted == observation[-1]:
-                accuracy += 1
-        return accuracy / len(data)
+        return self.run_epoch(data, train=False, print_predictions=print_predictions)
 
-    def perceptron(self, observation):
-        X = observation
+    def predict(self, observation):
+        X = observation + [-1.0,]
         y = self.dot_product(self.weights, X)
-        if y > self.threshold:
-            y = 1
+        if y > 0:
+            quant_y = 1
         else:
-            y = 0
-        predicted = list(self.classes.keys())[list(self.classes.values()).index(y)]
-        return predicted
+            quant_y = 0
+        predicted = list(self.classes.keys())[list(self.classes.values()).index(quant_y)]
+        return predicted, y, quant_y, X
 
     def accuracy_plot(self):
-        plt.figure(figsize=(20, 10))
-        plt.title('Accuracies after each epoch for learning rate ' + str(self.learning_rate))
-        plt.plot(list(range(1, self.num_epochs + 1)), self.accuracies)
-        plt.plot(list(range(1, self.num_epochs + 1)), self.train_accuracies)
+        plt.figure(figsize=(10, 8))
+        plt.title(f'Accuracies after each epoch for learning rate {str(self.learning_rate)}.')
+        plt.plot(list(range(1, self.num_epochs + 1)), self.accuracies, label='Test set')
+        plt.plot(list(range(1, self.num_epochs + 1)), self.train_accuracies, label='Training set')
         plt.xlabel('epoch')
         plt.ylabel('Accuracy')
         plt.grid()
+        plt.legend()
         plt.show()
+        for epoch_num, accuracy in enumerate(self.accuracies):
+            print(f'Accuracy for {epoch_num} epoch: {accuracy}')
 
 
 def main():
-    learning_rate = 0.003
-    epochs_num = 1000
-    # example2
-    p = Perceptron('data\\example2\\train.txt', 'data\\example2\\test.txt', learning_rate, epochs_num)
-    p.train()
-    # draw a plot
-    p.accuracy_plot()
-    # iris_perceptron
-    p = Perceptron('data\\iris_perceptron\\training.txt', 'data\\iris_perceptron\\test.txt', learning_rate, epochs_num)
-    p.train()
-    # draw a plot
-    p.accuracy_plot()
+    learning_rate = 0.00003
+    epochs_num = 100
+    experiment_example2_perceptron(epochs_num, learning_rate)
+    learning_rate = 0.0035
+    epochs_num = 400
+    p = experiment_iris_perceptron(epochs_num, learning_rate)
     # UI
     answer = True
     while answer:
@@ -144,20 +130,28 @@ def main():
             case 1:
                 observation = input('Podaj atrybuty obserwacji oddzielone przecinkami: ')
                 observation = list(map(float, observation.split(',')))
-                print('Predicted value for your observation is: ', p.perceptron(observation))
+                print('Predicted value for your observation is: ', p.predict(observation)[0])
             case 2:
                 learning_rate = float(input('Podaj nową stałą uczenia: '))
-                # example2
-                p = Perceptron('data\\example2\\train.txt', 'data\\example2\\test.txt', learning_rate, epochs_num)
-                p.train()
-                # draw a plot
-                p.accuracy_plot()
-                # iris_perceptron
-                p = Perceptron('data\\iris_perceptron\\training.txt', 'data\\iris_perceptron\\test.txt', learning_rate,
-                               epochs_num)
-                p.train()
-                # draw a plot
-                p.accuracy_plot()
+                experiment_example2_perceptron(epochs_num, learning_rate)
+                p = experiment_iris_perceptron(epochs_num, learning_rate)
+
+
+def experiment_iris_perceptron(epochs_num, learning_rate):
+    print('\nPerceotron performance for data from iris_perceptron:\n')
+    p = Perceptron('data\\iris_perceptron\\training.txt', 'data\\iris_perceptron\\test.txt', learning_rate, epochs_num)
+    p.train()
+    # draw a plot
+    p.accuracy_plot()
+    return p
+
+
+def experiment_example2_perceptron(epochs_num, learning_rate):
+    print('\nPerceotron performance for data from example2:\n')
+    p = Perceptron('data\\example2\\train.txt', 'data\\example2\\test.txt', learning_rate, epochs_num)
+    p.train()
+    # draw a plot
+    p.accuracy_plot()
 
 
 if __name__ == '__main__':
