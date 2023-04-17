@@ -1,3 +1,5 @@
+# This is a program for clustering using K-Means algorithm
+
 from random import sample
 import matplotlib.pyplot as plt
 
