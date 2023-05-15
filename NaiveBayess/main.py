@@ -54,28 +54,29 @@ class MultinomialNaiveBayes:
                                 np.sum(feature_counts) + self.laplace_smoothing * len(unique_feature_values))
 
     def predict(self, X):
+        posteriors = {}
+        for c in self.classes:
+            likelihood_values = np.zeros_like(X).astype(float)
+            for feature_index in range(X.shape[1]):
+                val_likelihoods = self.likelihoods[c][feature_index]
+
+                # Check which feature values are available in the likelihoods
+                likelihood_available = np.isin(X[:, feature_index], list(val_likelihoods.keys()))
+
+                # Use np.vectorize to calculate the likelihoods for available feature values
+                get_val_likelihood = np.vectorize(val_likelihoods.get)
+                likelihood_values[likelihood_available, feature_index] = get_val_likelihood(
+                    X[likelihood_available, feature_index])
+
+                likelihood_values[~likelihood_available, feature_index] = self.laplace_smoothing / (
+                        len(val_likelihoods) * self.laplace_smoothing + self.num_rows_given_label[c])
+
+            posteriors[c] = np.log(self.priors[c]) + np.sum(np.log(likelihood_values), axis=1)
+
         predictions = []
-        for sample in X:
-            posteriors = {}
-            for c in self.classes:
-                prior_log = np.log(self.priors[c])
-                log_likelihoods_list = []
-
-                for feature_index in range(len(sample)):
-
-                    if sample[feature_index] in self.likelihoods[c][feature_index]:
-                        likelihood_value = self.likelihoods[c][feature_index][sample[feature_index]]
-                    else:
-                        num_unique_values_feature = len(self.likelihoods[c][feature_index])
-                        likelihood_value = self.laplace_smoothing / (
-                                    num_unique_values_feature * self.laplace_smoothing + self.num_rows_given_label[c])
-
-                    log_likelihood = np.log(likelihood_value)
-                    log_likelihoods_list.append(log_likelihood)
-
-                posterior = np.sum(log_likelihoods_list)
-                posteriors[c] = prior_log + posterior
-            predictions.append(max(posteriors, key=posteriors.get))
+        for i in range(len(X)):
+            sample_posteriors = [posteriors[c][i] for c in self.classes]
+            predictions.append(self.classes[np.argmax(sample_posteriors)])
         return predictions
 
 
