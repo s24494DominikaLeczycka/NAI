@@ -1,5 +1,6 @@
-import matplotlib.pyplot as plt
+# This Python script is a handcrafted implementation of the K-Nearest Neighbors (KNN) algorithm, a popular machine learning model used for both regression and classification tasks. The implementation is not reliant on any machine learning libraries and solely uses basic Python functionality, and the matplotlib library for visualization.
 
+import matplotlib.pyplot as plt
 
 def read_file(path):
     train = open(path)
