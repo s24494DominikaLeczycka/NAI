@@ -50,8 +50,8 @@ class MultinomialNaiveBayes:
                 self.likelihoods[c][feature_index] = {}
                 unique_feature_values, feature_counts = np.unique(X_c[:, feature_index], return_counts=True)
                 for value, count in zip(unique_feature_values, feature_counts):
-                    self.likelihoods[c][feature_index][value] = (count + self.laplace_smoothing) / (
-                                np.sum(feature_counts) + self.laplace_smoothing * len(unique_feature_values))
+                    self.likelihoods[c][feature_index][value] = (count) / (
+                                np.sum(feature_counts) + len(unique_feature_values))
 
     def predict(self, X):
         posteriors = {}
@@ -71,7 +71,7 @@ class MultinomialNaiveBayes:
                 likelihood_values[~likelihood_available, feature_index] = self.laplace_smoothing / (
                         len(val_likelihoods) * self.laplace_smoothing + self.num_rows_given_label[c])
 
-            posteriors[c] = np.log(self.priors[c]) + np.sum(np.log(likelihood_values), axis=1)
+            posteriors[c] = self.priors[c] + np.sum(np.log(likelihood_values), axis=1)
 
         predictions = []
         for i in range(len(X)):
