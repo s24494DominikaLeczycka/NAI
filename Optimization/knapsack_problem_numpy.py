@@ -1,6 +1,21 @@
 import numpy as np
 
-def knapsack_brute_force(weights, values, capacity):
+def knapsack_brute_force(file_path):
+    # Load data from file
+    with open(file_path, 'r') as file:
+        lines = file.read().splitlines()
+
+    # The first line is the capacity of the knapsack
+    capacity = int(lines[0])
+
+    # The remaining lines are the weights and values of the items
+    weights = []
+    values = []
+    for line in lines[1:]:
+        w, v = map(int, line.split())
+        weights.append(w)
+        values.append(v)
+
     # Convert lists to numpy arrays for efficient computation
     weights = np.array(weights)
     values = np.array(values)
@@ -16,10 +31,10 @@ def knapsack_brute_force(weights, values, capacity):
     for i in range(2**n):
         # Create a characteristic vector using modulo operation
         characteristic_vector = []
-        num = i
+        temp = i
         for _ in range(n):
-            characteristic_vector.append(num % 2)
-            num //= 2
+            characteristic_vector.append(temp % 2)
+            temp //= 2
         characteristic_vector.reverse()
 
         # Convert to numpy array
@@ -39,10 +54,6 @@ def knapsack_brute_force(weights, values, capacity):
     print(f'Best Value: {best_value}')
     print(f'Best Characteristic Vector: {best_vector}')
 
-# Define weights and values
-weights = [10, 20, 30]
-values = [60, 100, 120]
-capacity = 50
 
 # Run the function
-knapsack_brute_force(weights, values, capacity)
+knapsack_brute_force('knapsack_data.txt')

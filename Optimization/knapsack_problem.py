@@ -1,4 +1,19 @@
-def knapsack_brute_force(weights, values, capacity):
+def knapsack_brute_force(file_path):
+    # Load data from file
+    with open(file_path, 'r') as file:
+        lines = file.read().splitlines()
+
+    # The first line is the capacity of the knapsack
+    capacity = int(lines[0])
+
+    # The remaining lines are the weights and values of the items
+    weights = []
+    values = []
+    for line in lines[1:]:
+        w, v = map(int, line.split())
+        weights.append(w)
+        values.append(v)
+
     # Number of items
     n = len(weights)
 
@@ -7,7 +22,7 @@ def knapsack_brute_force(weights, values, capacity):
     best_vector = None
 
     # Iterate over all possible combinations
-    for i in range(2**n):
+    for i in range(2 ** n):
         # Create a characteristic vector using modulo operation
         characteristic_vector = []
         temp = i
@@ -17,8 +32,8 @@ def knapsack_brute_force(weights, values, capacity):
         characteristic_vector.reverse()
 
         # Compute total weight and value of this combination
-        total_weight = sum([a*b for a, b in zip(weights, characteristic_vector)])
-        total_value = sum([a*b for a, b in zip(values, characteristic_vector)])
+        total_weight = sum([a * b for a, b in zip(weights, characteristic_vector)])
+        total_value = sum([a * b for a, b in zip(values, characteristic_vector)])
 
         # If the total weight is less than or equal to the capacity and total value is greater than the best value
         # Update the best value and corresponding characteristic vector
@@ -26,14 +41,10 @@ def knapsack_brute_force(weights, values, capacity):
             best_value = total_value
             best_vector = characteristic_vector
 
-    # Print the best value and corresponding characteristic vector
-    print(f'Best Value: {best_value}')
-    print(f'Best Characteristic Vector: {best_vector}')
+            # Print the best value and corresponding characteristic vector
+        print(f'Best Value: {best_value}')
+        print(f'Best Characteristic Vector: {best_vector}')
 
-# Define weights and values
-weights = [10, 20, 30]
-values = [60, 100, 120]
-capacity = 50
+    # Run the function
+    knapsack_brute_force('knapsack_data.txt')
 
-# Run the function
-knapsack_brute_force(weights, values, capacity)
