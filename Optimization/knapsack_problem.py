@@ -42,6 +42,5 @@ def knapsack_brute_force(file_path):
         print(f'Best Value: {best_value}')
         print(f'Best Characteristic Vector: {best_vector}')
 
-    # Run the function
     knapsack_brute_force('knapsack_data.txt')
 
