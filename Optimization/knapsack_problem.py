@@ -3,10 +3,7 @@ def knapsack_brute_force(file_path):
     with open(file_path, 'r') as file:
         lines = file.read().splitlines()
 
-    # The first line is the capacity of the knapsack
     capacity = int(lines[0])
-
-    # The remaining lines are the weights and values of the items
     weights = []
     values = []
     for line in lines[1:]:
